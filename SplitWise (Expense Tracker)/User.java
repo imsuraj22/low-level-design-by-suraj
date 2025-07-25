@@ -6,6 +6,10 @@ public class User {
     private String name;
     private String email;
 
+    public User(String name) {
+        this(name, null);
+    }
+
     public User(String name, String email) {
         this.id = counter.incrementAndGet(); // Auto-incremented ID
         this.name = name;
@@ -14,10 +18,6 @@ public class User {
 
     public int getId() {
         return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -34,6 +34,11 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", name='" + name + "', email='" + email + "'}";
     }
 
 }

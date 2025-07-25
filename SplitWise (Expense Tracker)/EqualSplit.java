@@ -1,6 +1,6 @@
 import java.util.Map;
 
-public class EqualSplit implements Split {
+public class EqualSplit implements SplitStrategy {
 
     // 1. Private static final instance (eager initialization)
     private static final EqualSplit instance = new EqualSplit();

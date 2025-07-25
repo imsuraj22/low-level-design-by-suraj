@@ -1,6 +1,6 @@
 import java.util.Map;
 
-public class PercentageSplit implements Split {
+public class PercentageSplit implements SplitStrategy {
 
     // 1. Private static final instance
     private static final PercentageSplit instance = new PercentageSplit();

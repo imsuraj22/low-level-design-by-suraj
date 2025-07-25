@@ -1,6 +1,4 @@
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -8,12 +6,11 @@ public class Expense {
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     private int id; // auto-generated
-    private String name; // was previously String id
+    private String name;
     private double amount;
     private User paidBy;
     private String description;
     private SplitType splitType;
-    private String tripName;
     private Map<User, Double> balances;
     private Map<User, Double> users;
 
@@ -27,8 +24,7 @@ public class Expense {
 
     // Constructor with optional description
     public Expense(String name, double amount, User paidBy, Map<User, Double> users, SplitType splitType,
-            String description,
-            String tripName) {
+            String description) {
         this.id = counter.incrementAndGet(); // auto-incremented
         this.users = new HashMap<>(users);
         this.name = name;
@@ -36,17 +32,31 @@ public class Expense {
         this.paidBy = paidBy;
         this.splitType = splitType;
         this.description = description;
-        this.tripName = tripName;
         this.balances = new HashMap<>();
 
         calculateExpense(users, balances, amount, splitType);
+    }
 
+    // Overloaded constructor without description
+    public Expense(String name, double amount, User paidBy, Map<User, Double> users, SplitType splitType) {
+        this(name, amount, paidBy, users, splitType, null);
+    }
+
+    public void updateExpense(String name, double amount, User paidBy, Map<User, Double> users,
+            SplitType splitType, String description) {
+        this.name = name;
+        this.amount = amount;
+        this.paidBy = paidBy;
+        this.users = new HashMap<>(users);
+        this.splitType = splitType;
+        this.description = description;
+        this.balances = new HashMap<>();
+        calculateExpense(this.users, this.balances, this.amount, this.splitType);
     }
 
     void calculateExpense(Map<User, Double> users, Map<User, Double> balances, Double amount, SplitType splitType) {
         balances.clear();
         if (splitType == SplitType.EQUAL) {
-
             EqualSplit equalSplit = EqualSplit.getInstance();
             equalSplit.perfromSplit(users, balances, amount);
         } else if (splitType == SplitType.EXACT) {
@@ -56,12 +66,6 @@ public class Expense {
             PercentageSplit percentageSplit = PercentageSplit.getInstance();
             percentageSplit.perfromSplit(users, balances, amount);
         }
-    }
-
-    // Overloaded constructor without description
-    public Expense(String name, double amount, User paidBy, Map<User, Double> users, SplitType splitType,
-            String tripName) {
-        this(name, amount, paidBy, users, splitType, null, tripName);
     }
 
     // Getters and setters
@@ -89,10 +93,6 @@ public class Expense {
         return splitType;
     }
 
-    public String getTripName() {
-        return tripName;
-    }
-
     public Map<User, Double> getBalances() {
         return balances;
     }
@@ -103,10 +103,12 @@ public class Expense {
 
     public void setAmount(double amount) {
         this.amount = amount;
+        calculateExpense(users, balances, amount, splitType);
     }
 
     public void setPaidBy(User paidBy) {
         this.paidBy = paidBy;
+        calculateExpense(users, balances, amount, splitType);
     }
 
     public void setDescription(String description) {
@@ -115,10 +117,7 @@ public class Expense {
 
     public void setSplitType(SplitType splitType) {
         this.splitType = splitType;
-    }
-
-    public void setTripName(String tripName) {
-        this.tripName = tripName;
+        calculateExpense(users, balances, amount, splitType);
     }
 
     public void setBalances(Map<User, Double> balances) {
@@ -135,4 +134,30 @@ public class Expense {
         calculateExpense(users, balances, this.amount, this.splitType);
     }
 
+    public void showExpense() {
+        System.out.println("-------- Expense Details --------");
+        System.out.println("ID: " + id);
+        System.out.println("Name: " + name);
+        System.out.println("Amount: " + amount);
+        System.out.println("Paid By: " + paidBy.getName());
+        System.out.println("Description: " + (description == null ? "No description" : description));
+        System.out.println("Split Type: " + splitType);
+
+        // System.out.println("\nUsers involved:");
+        // for (Map.Entry<User, Double> entry : users.entrySet()) {
+        // System.out.println("- " + entry.getKey().getName());
+        // if (splitType == SplitType.EXACT || splitType == SplitType.PERCENT) {
+        // System.out.println(" → Value: " + entry.getValue());
+        // }
+        // }
+
+        System.out.println("\nBalances:");
+        for (Map.Entry<User, Double> entry : balances.entrySet()) {
+            if (entry.getKey().getId() != paidBy.getId()) {
+                String balanceStr = String.format("%.2f", entry.getValue());
+                System.out.println("- " + entry.getKey().getName() + " → Balance: " + balanceStr);
+            }
+        }
+        System.out.println("----------------------------------\n");
+    }
 }

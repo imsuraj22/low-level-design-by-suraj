@@ -1,6 +1,6 @@
 import java.util.Map;
 
-public class ExactSplit implements Split {
+public class ExactSplit implements SplitStrategy {
 
     // 1. Private static instance
     private static final ExactSplit instance = new ExactSplit();
