@@ -62,6 +62,12 @@ public class Expense {
         } else if (splitType == SplitType.EXACT) {
             ExactSplit exactSplit = ExactSplit.getInstance();
             exactSplit.perfromSplit(users, balances, amount);
+            Double val = 0.0;
+            for (User user : users.keySet()) {
+                val += users.get(user);
+            }
+            System.out.println("val is: " + val);
+            this.amount = val;
         } else {
             PercentageSplit percentageSplit = PercentageSplit.getInstance();
             percentageSplit.perfromSplit(users, balances, amount);
@@ -155,7 +161,8 @@ public class Expense {
         for (Map.Entry<User, Double> entry : balances.entrySet()) {
             if (entry.getKey().getId() != paidBy.getId()) {
                 String balanceStr = String.format("%.2f", entry.getValue());
-                System.out.println("- " + entry.getKey().getName() + " → Balance: " + balanceStr);
+                System.out
+                        .println("- " + entry.getKey().getName() + " owes Rs" + balanceStr + " to " + paidBy.getName());
             }
         }
         System.out.println("----------------------------------\n");

@@ -345,38 +345,42 @@ public class Main {
             }
         }
 
-        System.out.print("Add a new user to the split? (y/n): ");
-        if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-            User newUser = createNewUser();
-            members.add(newUser);
+        while (true) {
+            System.out.print("Add a new user to the split? (y/n): ");
+            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+                User newUser = createNewUser();
+                members.add(newUser);
 
-            double val = 0;
-            if (splitType == SplitType.EXACT) {
-                while (true) {
-                    System.out.print("Enter exact amount: ");
-                    try {
-                        val = Double.parseDouble(sc.nextLine().trim());
-                        break;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid input.");
+                double val = 0;
+                if (splitType == SplitType.EXACT) {
+                    while (true) {
+                        System.out.print("Enter exact amount: ");
+                        try {
+                            val = Double.parseDouble(sc.nextLine().trim());
+                            break;
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid input.");
+                        }
+                    }
+                } else if (splitType == SplitType.PERCENT) {
+                    while (true) {
+                        System.out.print("Enter percent: ");
+                        try {
+                            double percent = Double.parseDouble(sc.nextLine().trim());
+                            percentSum += percent;
+                            val = (percent / 100.0) * amount;
+                            break;
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid input.");
+                        }
                     }
                 }
-            } else if (splitType == SplitType.PERCENT) {
-                while (true) {
-                    System.out.print("Enter percent: ");
-                    try {
-                        double percent = Double.parseDouble(sc.nextLine().trim());
-                        percentSum += percent;
-                        val = (percent / 100.0) * amount;
-                        break;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid input.");
-                    }
-                }
+
+                usersMap.put(newUser, val);
+                includedUsers.add(newUser);
+            } else {
+                break;
             }
-
-            usersMap.put(newUser, val);
-            includedUsers.add(newUser);
         }
 
         if (splitType == SplitType.PERCENT && Math.abs(percentSum - 100.0) > 0.001) {
@@ -503,38 +507,42 @@ public class Main {
             }
         }
 
-        System.out.print("Add new user to split? (y/n): ");
-        if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-            User newUser = createNewUser();
-            globalUsers.add(newUser);
+        while (true) {
+            System.out.print("Add new user to split? (y/n): ");
+            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+                User newUser = createNewUser();
+                globalUsers.add(newUser);
 
-            double val = 0;
-            if (type == SplitType.EXACT) {
-                while (true) {
-                    System.out.print("Enter exact amount: ");
-                    try {
-                        val = Double.parseDouble(sc.nextLine().trim());
-                        break;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid input.");
+                double val = 0;
+                if (type == SplitType.EXACT) {
+                    while (true) {
+                        System.out.print("Enter exact amount: ");
+                        try {
+                            val = Double.parseDouble(sc.nextLine().trim());
+                            break;
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid input.");
+                        }
+                    }
+                } else if (type == SplitType.PERCENT) {
+                    while (true) {
+                        System.out.print("Enter percent: ");
+                        try {
+                            double percent = Double.parseDouble(sc.nextLine().trim());
+                            percentSum += percent;
+                            val = (percent / 100.0) * amount;
+                            break;
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid input.");
+                        }
                     }
                 }
-            } else if (type == SplitType.PERCENT) {
-                while (true) {
-                    System.out.print("Enter percent: ");
-                    try {
-                        double percent = Double.parseDouble(sc.nextLine().trim());
-                        percentSum += percent;
-                        val = (percent / 100.0) * amount;
-                        break;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid input.");
-                    }
-                }
+
+                usersMap.put(newUser, val);
+                includedUsers.add(newUser);
+            } else {
+                break;
             }
-
-            usersMap.put(newUser, val);
-            includedUsers.add(newUser);
         }
 
         if (type == SplitType.PERCENT && Math.abs(percentSum - 100.0) > 0.001) {
