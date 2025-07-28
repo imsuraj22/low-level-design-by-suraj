@@ -162,7 +162,8 @@ public class Expense {
             if (entry.getKey().getId() != paidBy.getId()) {
                 String balanceStr = String.format("%.2f", entry.getValue());
                 System.out
-                        .println("- " + entry.getKey().getName() + " owes Rs" + balanceStr + " to " + paidBy.getName());
+                        .println(
+                                "- " + entry.getKey().getName() + " owes Rs " + balanceStr + " to " + paidBy.getName());
             }
         }
         System.out.println("----------------------------------\n");

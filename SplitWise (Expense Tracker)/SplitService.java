@@ -105,7 +105,8 @@ public class SplitService {
             System.out.println("Enter 1 to see all the expenses of this split");
             System.out.println("Enter 2 to delete this split");
             System.out.println("Enter 3 to edit this split");
-            System.out.println("Press Enter to exit");
+            System.out.println("Enter 4 to contunue");
+            System.out.println("Enter 5 to exit");
 
             String input = sc.nextLine(); // safer than charAt(0)
             if (input.equals("1")) {
@@ -138,12 +139,14 @@ public class SplitService {
                     ;
                 } else {
                     // pressed Enter or other key
-                    return;
+                    // return;
                 }
             } else if (input.equals("2")) {
                 splits.remove(i);
             } else if (input.equals("3")) {
                 editSplit(splits.get(i));
+            } else if (input.equals("4")) {
+                continue;
             } else {
                 // System.out.println("Returning...");
                 return;
