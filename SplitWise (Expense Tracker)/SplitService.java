@@ -2,8 +2,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SplitService {
+
     Scanner sc;
     List<User> users;
     List<Split> splits;
@@ -156,81 +158,87 @@ public class SplitService {
     }
 
     public void editSplit(Split split) {
-        System.out.println("Editing Split Details:");
+        ReentrantLock lock = split.getLock();
+        lock.lock();
+        try {
+            System.out.println("Editing Split Details:");
 
-        // Update description
-        System.out.print("Current description: \"" + split.getDescription()
-                + "\"\nEnter new description (press Enter to skip): ");
-        String newDesc = sc.nextLine().trim();
-        if (!newDesc.isEmpty()) {
-            split.setDescription(newDesc);
-        }
+            // Update description
+            System.out.print("Current description: \"" + split.getDescription()
+                    + "\"\nEnter new description (press Enter to skip): ");
+            String newDesc = sc.nextLine().trim();
+            if (!newDesc.isEmpty()) {
+                split.setDescription(newDesc);
+            }
 
-        // Show existing members
-        System.out.println("\nCurrent members in the split:");
-        List<User> members = split.getMembers();
-        for (int i = 0; i < members.size(); i++) {
-            System.out.println((i + 1) + ". " + members.get(i).getName());
-        }
+            // Show existing members
+            System.out.println("\nCurrent members in the split:");
+            List<User> members = split.getMembers();
+            for (int i = 0; i < members.size(); i++) {
+                System.out.println((i + 1) + ". " + members.get(i).getName());
+            }
 
-        // Option to remove members
-        System.out.print("Do you want to remove any members? (y/n): ");
-        if (sc.nextLine().equalsIgnoreCase("y")) {
-            List<User> toRemove = new ArrayList<>();
-            for (User user : members) {
-                System.out.print("Remove " + user.getName() + "? (y/n): ");
-                if (sc.nextLine().equalsIgnoreCase("y")) {
-                    toRemove.add(user);
+            // Option to remove members
+            System.out.print("Do you want to remove any members? (y/n): ");
+            if (sc.nextLine().equalsIgnoreCase("y")) {
+                List<User> toRemove = new ArrayList<>();
+                for (User user : members) {
+                    System.out.print("Remove " + user.getName() + "? (y/n): ");
+                    if (sc.nextLine().equalsIgnoreCase("y")) {
+                        toRemove.add(user);
+                    }
+                }
+                members.removeAll(toRemove);
+            }
+
+            // Option to add members
+            System.out.print("\nDo you want to add new members? (y/n): ");
+            if (sc.nextLine().equalsIgnoreCase("y")) {
+                while (true) {
+                    System.out.println("Choose option:");
+                    for (int i = 0; i < users.size(); i++) {
+                        System.out.println((i + 1) + ". " + users.get(i).getName());
+                    }
+                    System.out.println((users.size() + 1) + ". Create New User");
+                    System.out.println("0. Stop adding users");
+
+                    int choice;
+                    try {
+                        choice = Integer.parseInt(sc.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input.");
+                        continue;
+                    }
+
+                    if (choice == 0)
+                        break;
+                    User selectedUser = null;
+
+                    if (choice >= 1 && choice <= users.size()) {
+                        selectedUser = users.get(choice - 1);
+                    } else if (choice == users.size() + 1) {
+                        selectedUser = userService.createNewUser();
+                        users.add(selectedUser);
+                    } else {
+                        System.out.println("Invalid choice.");
+                        continue;
+                    }
+
+                    if (members.contains(selectedUser)) {
+                        System.out.println(selectedUser.getName() + " is already a member.");
+                    } else {
+                        members.add(selectedUser);
+                        System.out.println("✅ " + selectedUser.getName() + " added to the split.");
+                    }
                 }
             }
-            members.removeAll(toRemove);
+
+            // Save updated members
+            split.setMembers(members);
+
+            System.out.println("\n✅ Split updated successfully.\n");
+        } finally {
+            lock.unlock();
         }
-
-        // Option to add members
-        System.out.print("\nDo you want to add new members? (y/n): ");
-        if (sc.nextLine().equalsIgnoreCase("y")) {
-            while (true) {
-                System.out.println("Choose option:");
-                for (int i = 0; i < users.size(); i++) {
-                    System.out.println((i + 1) + ". " + users.get(i).getName());
-                }
-                System.out.println((users.size() + 1) + ". Create New User");
-                System.out.println("0. Stop adding users");
-
-                int choice;
-                try {
-                    choice = Integer.parseInt(sc.nextLine());
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid input.");
-                    continue;
-                }
-
-                if (choice == 0)
-                    break;
-                User selectedUser = null;
-
-                if (choice >= 1 && choice <= users.size()) {
-                    selectedUser = users.get(choice - 1);
-                } else if (choice == users.size() + 1) {
-                    selectedUser = userService.createNewUser();
-                    users.add(selectedUser);
-                } else {
-                    System.out.println("Invalid choice.");
-                    continue;
-                }
-
-                if (members.contains(selectedUser)) {
-                    System.out.println(selectedUser.getName() + " is already a member.");
-                } else {
-                    members.add(selectedUser);
-                    System.out.println("✅ " + selectedUser.getName() + " added to the split.");
-                }
-            }
-        }
-
-        // Save updated members
-        split.setMembers(members);
-
-        System.out.println("\n✅ Split updated successfully.\n");
     }
 }

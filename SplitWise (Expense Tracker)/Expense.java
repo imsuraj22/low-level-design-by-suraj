@@ -1,9 +1,11 @@
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Expense {
     private static final AtomicInteger counter = new AtomicInteger(0);
+    private final ReentrantLock lock = new ReentrantLock();
 
     private int id; // auto-generated
     private String name;
@@ -20,6 +22,10 @@ public class Expense {
 
     public void setUsers(Map<User, Double> users) {
         this.users = users;
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 
     // Constructor with optional description

@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ExpenseService {
     Scanner sc;
@@ -25,157 +26,163 @@ public class ExpenseService {
     }
 
     public void editExpense(Expense expense, List<User> globalUsers) {
-        System.out.println("Editing expense: " + expense.getName());
+        ReentrantLock lock = expense.getLock();
+        lock.lock();
+        try {
+            System.out.println("Editing expense: " + expense.getName());
 
-        System.out.print("New name (Enter to skip): ");
-        String name = sc.nextLine().trim();
-        if (name.isEmpty())
-            name = expense.getName();
+            System.out.print("New name (Enter to skip): ");
+            String name = sc.nextLine().trim();
+            if (name.isEmpty())
+                name = expense.getName();
 
-        System.out.print("New description (Enter to skip): ");
-        String desc = sc.nextLine().trim();
-        if (desc.isEmpty())
-            desc = expense.getDescription();
+            System.out.print("New description (Enter to skip): ");
+            String desc = sc.nextLine().trim();
+            if (desc.isEmpty())
+                desc = expense.getDescription();
 
-        SplitType type = null;
-        while (type == null) {
-            System.out.println("Choose Split Type: 1. EQUAL  2. EXACT  3. PERCENT");
-            try {
-                int opt = Integer.parseInt(sc.nextLine().trim());
-                switch (opt) {
-                    case 1:
-                        type = SplitType.EQUAL;
-                        break;
-                    case 2:
-                        type = SplitType.EXACT;
-                        break;
-                    case 3:
-                        type = SplitType.PERCENT;
-                        break;
-                    default:
-                        System.out.println("Invalid choice.");
-                        break;
-                }
-
-            } catch (NumberFormatException e) {
-                System.out.println("Enter a valid number.");
-            }
-        }
-
-        double amount = expense.getAmount();
-        if (type != SplitType.EXACT) {
-            System.out.print("Enter new amount (Enter to skip): ");
-            String amtStr = sc.nextLine().trim();
-            if (!amtStr.isEmpty()) {
+            SplitType type = null;
+            while (type == null) {
+                System.out.println("Choose Split Type: 1. EQUAL  2. EXACT  3. PERCENT");
                 try {
-                    amount = Double.parseDouble(amtStr);
+                    int opt = Integer.parseInt(sc.nextLine().trim());
+                    switch (opt) {
+                        case 1:
+                            type = SplitType.EQUAL;
+                            break;
+                        case 2:
+                            type = SplitType.EXACT;
+                            break;
+                        case 3:
+                            type = SplitType.PERCENT;
+                            break;
+                        default:
+                            System.out.println("Invalid choice.");
+                            break;
+                    }
+
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid number. Keeping old amount.");
+                    System.out.println("Enter a valid number.");
                 }
             }
-        }
 
-        Map<User, Double> usersMap = new HashMap<>();
-        List<User> includedUsers = new ArrayList<>();
-        double percentSum = 0;
-
-        for (User user : globalUsers) {
-            System.out.println("Include " + user.getName() + " in split? (y/n): ");
-            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-                double val = 0;
-                if (type == SplitType.EXACT) {
-                    while (true) {
-                        System.out.print("Enter exact amount: ");
-                        try {
-                            val = Double.parseDouble(sc.nextLine().trim());
-                            break;
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid number.");
-                        }
-                    }
-                } else if (type == SplitType.PERCENT) {
-                    while (true) {
-                        System.out.print("Enter percentage: ");
-                        try {
-                            double percent = Double.parseDouble(sc.nextLine().trim());
-                            percentSum += percent;
-                            val = (percent / 100.0) * amount;
-                            break;
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid percentage.");
-                        }
+            double amount = expense.getAmount();
+            if (type != SplitType.EXACT) {
+                System.out.print("Enter new amount (Enter to skip): ");
+                String amtStr = sc.nextLine().trim();
+                if (!amtStr.isEmpty()) {
+                    try {
+                        amount = Double.parseDouble(amtStr);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid number. Keeping old amount.");
                     }
                 }
-
-                usersMap.put(user, val);
-                includedUsers.add(user);
             }
-        }
 
-        while (true) {
-            System.out.print("Add new user to split? (y/n): ");
-            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-                User newUser = userService.createNewUser();
-                globalUsers.add(newUser);
+            Map<User, Double> usersMap = new HashMap<>();
+            List<User> includedUsers = new ArrayList<>();
+            double percentSum = 0;
 
-                double val = 0;
-                if (type == SplitType.EXACT) {
-                    while (true) {
-                        System.out.print("Enter exact amount: ");
-                        try {
-                            val = Double.parseDouble(sc.nextLine().trim());
-                            break;
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid input.");
+            for (User user : globalUsers) {
+                System.out.println("Include " + user.getName() + " in split? (y/n): ");
+                if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+                    double val = 0;
+                    if (type == SplitType.EXACT) {
+                        while (true) {
+                            System.out.print("Enter exact amount: ");
+                            try {
+                                val = Double.parseDouble(sc.nextLine().trim());
+                                break;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid number.");
+                            }
+                        }
+                    } else if (type == SplitType.PERCENT) {
+                        while (true) {
+                            System.out.print("Enter percentage: ");
+                            try {
+                                double percent = Double.parseDouble(sc.nextLine().trim());
+                                percentSum += percent;
+                                val = (percent / 100.0) * amount;
+                                break;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid percentage.");
+                            }
                         }
                     }
-                } else if (type == SplitType.PERCENT) {
-                    while (true) {
-                        System.out.print("Enter percent: ");
-                        try {
-                            double percent = Double.parseDouble(sc.nextLine().trim());
-                            percentSum += percent;
-                            val = (percent / 100.0) * amount;
-                            break;
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid input.");
-                        }
-                    }
+
+                    usersMap.put(user, val);
+                    includedUsers.add(user);
                 }
-
-                usersMap.put(newUser, val);
-                includedUsers.add(newUser);
-            } else {
-                break;
             }
-        }
 
-        if (type == SplitType.PERCENT && Math.abs(percentSum - 100.0) > 0.001) {
-            System.out.println("❌ Total percent is " + percentSum + "%. It must be 100%.");
-            return;
-        }
+            while (true) {
+                System.out.print("Add new user to split? (y/n): ");
+                if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+                    User newUser = userService.createNewUser();
+                    globalUsers.add(newUser);
 
-        System.out.println("Select PaidBy from included users:");
-        for (int i = 0; i < includedUsers.size(); i++) {
-            System.out.println((i + 1) + ". " + includedUsers.get(i).getName());
-        }
+                    double val = 0;
+                    if (type == SplitType.EXACT) {
+                        while (true) {
+                            System.out.print("Enter exact amount: ");
+                            try {
+                                val = Double.parseDouble(sc.nextLine().trim());
+                                break;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input.");
+                            }
+                        }
+                    } else if (type == SplitType.PERCENT) {
+                        while (true) {
+                            System.out.print("Enter percent: ");
+                            try {
+                                double percent = Double.parseDouble(sc.nextLine().trim());
+                                percentSum += percent;
+                                val = (percent / 100.0) * amount;
+                                break;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input.");
+                            }
+                        }
+                    }
 
-        User paidBy = null;
-        while (paidBy == null) {
-            try {
-                int idx = Integer.parseInt(sc.nextLine().trim());
-                if (idx < 1 || idx > includedUsers.size()) {
-                    System.out.println("Invalid index.");
+                    usersMap.put(newUser, val);
+                    includedUsers.add(newUser);
                 } else {
-                    paidBy = includedUsers.get(idx - 1);
+                    break;
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Enter a valid number.");
             }
-        }
 
-        expense.updateExpense(name, amount, paidBy, usersMap, type, desc);
-        System.out.println("✅ Expense updated.\n");
+            if (type == SplitType.PERCENT && Math.abs(percentSum - 100.0) > 0.001) {
+                System.out.println("❌ Total percent is " + percentSum + "%. It must be 100%.");
+                return;
+            }
+
+            System.out.println("Select PaidBy from included users:");
+            for (int i = 0; i < includedUsers.size(); i++) {
+                System.out.println((i + 1) + ". " + includedUsers.get(i).getName());
+            }
+
+            User paidBy = null;
+            while (paidBy == null) {
+                try {
+                    int idx = Integer.parseInt(sc.nextLine().trim());
+                    if (idx < 1 || idx > includedUsers.size()) {
+                        System.out.println("Invalid index.");
+                    } else {
+                        paidBy = includedUsers.get(idx - 1);
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Enter a valid number.");
+                }
+            }
+
+            expense.updateExpense(name, amount, paidBy, usersMap, type, desc);
+            System.out.println("✅ Expense updated.\n");
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void addExpense(Split split) {

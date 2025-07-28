@@ -1,8 +1,10 @@
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Split {
     private static final AtomicInteger counter = new AtomicInteger(0);
+    private final ReentrantLock lock = new ReentrantLock();
 
     private final String id;
     private String description;
@@ -24,8 +26,13 @@ public class Split {
         this.expenses = new ArrayList<>();
     }
 
+    public ReentrantLock getLock() {
+        return lock;
+    }
+
     public void addUser(User user) {
         members.add(user);
+
     }
 
     public void deleteUser(User user) {
