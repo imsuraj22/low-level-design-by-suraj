@@ -58,10 +58,10 @@ public class Expense {
         balances.clear();
         if (splitType == SplitType.EQUAL) {
             EqualSplit equalSplit = EqualSplit.getInstance();
-            equalSplit.perfromSplit(users, balances, amount);
+            equalSplit.performSplit(users, balances, amount);
         } else if (splitType == SplitType.EXACT) {
             ExactSplit exactSplit = ExactSplit.getInstance();
-            exactSplit.perfromSplit(users, balances, amount);
+            exactSplit.performSplit(users, balances, amount);
             Double val = 0.0;
             for (User user : users.keySet()) {
                 val += users.get(user);
@@ -70,7 +70,7 @@ public class Expense {
             this.amount = val;
         } else {
             PercentageSplit percentageSplit = PercentageSplit.getInstance();
-            percentageSplit.perfromSplit(users, balances, amount);
+            percentageSplit.performSplit(users, balances, amount);
         }
     }
 

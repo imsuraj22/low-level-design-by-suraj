@@ -16,7 +16,7 @@ public class EqualSplit implements SplitStrategy {
 
     // 4. Implementation of interface method
     @Override
-    public void perfromSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
+    public void performSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
         // Equal split logic here
         int n = users.size();
         Double SplitAmount = amount / n;

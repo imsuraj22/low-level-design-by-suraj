@@ -16,7 +16,7 @@ public class ExactSplit implements SplitStrategy {
 
     // 4. Method from interface
     @Override
-    public void perfromSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
+    public void performSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
         // splitting logic here
         for (User user : users.keySet()) {
             balances.put(user, users.get(user));

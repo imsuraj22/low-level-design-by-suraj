@@ -16,7 +16,7 @@ public class PercentageSplit implements SplitStrategy {
 
     // 4. Implement the interface method
     @Override
-    public void perfromSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
+    public void performSplit(Map<User, Double> users, Map<User, Double> balances, Double amount) {
         // Percentage split logic here
         for (User user : users.keySet()) {
             Double percentage = users.get(user);
