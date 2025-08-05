@@ -2,13 +2,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class User {
     private static final AtomicInteger counter = new AtomicInteger(0);
-    private int id;
+    private long id;
     private String name;
     private String email;
     private String password;
 
     public User(String name, String email, String password) {
-        this.id = counter.incrementAndGet();
+        this.id = (long) counter.incrementAndGet();
         this.name = name;
         this.email = email;
         this.password = password;
@@ -22,7 +22,7 @@ public class User {
         this.password = password;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
