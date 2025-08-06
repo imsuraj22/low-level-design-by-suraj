@@ -34,7 +34,7 @@ public class UserService {
 
     public void createUser() {
         while (true) {
-            System.out.println("Enter the name or press enter to stop");
+            System.out.println("Enter the name to create user or press enter to stop");
             String name = sc.nextLine();
             if (name.isEmpty())
                 return;
@@ -61,19 +61,48 @@ public class UserService {
 
             User newUser = new User(name, email, password);
             registeredUsers.add(newUser);
+            System.out.println("User Created Successfully");
         }
 
     }
 
-    public void logIn(String email, String password) {
+    public boolean logIn(String email, String password) {
         for (int i = 0; i < registeredUsers.size(); i++) {
             User user = registeredUsers.get(i);
             if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
                 loggedInUser = user;
+                return true;
             }
         }
-        System.out.println("Please enter valid email id or password");
+        return false;
 
+    }
+
+    public User getLoggedInUser() {
+        return loggedInUser;
+    }
+
+    public void logout() {
+        if (loggedInUser != null) {
+            System.out.println("User " + loggedInUser.getName() + " logged out.");
+            loggedInUser = null;
+        } else {
+            System.out.println("No user logged in!");
+        }
+    }
+
+    public void printURLS(long userId) {
+        if (userUrlsMap.containsKey(userId)) {
+
+            System.out.println("Your URLs:");
+            for (Url url : userUrlsMap.get(userId)) {
+                System.out.println("URL ID " + url.getUrlId() + "| Short: " + url.getShortURL() +
+                        " | Long: " + url.getLongURL() +
+                        " | Clicks: " + url.getClickCount());
+            }
+        } else {
+            System.out.println("No URLs found");
+        }
     }
 
     public void showAllUrls() {
@@ -82,31 +111,43 @@ public class UserService {
             return;
         }
         long userId = loggedInUser.getId();
-        if (!userUrlsMap.containsKey(userId)) {
-            System.out.println("No URLs found");
-            return;
-        }
-        System.out.println("Your URLs:");
-        for (Url url : userUrlsMap.get(userId)) {
-            System.out.println("Short: " + url.getShortURL() +
-                    " | Long: " + url.getLongURL() +
-                    " | Clicks: " + url.getClickCount());
-        }
+        printURLS(userId);
+
         String input = "";
         while (true) {
             System.out
-                    .println("Enter 1 to edit URL/nEnter 2 to delete URL/nEnter 3 to add the URL/nPress Enter to exit");
+                    .println(
+                            "Enter 1 to edit URL\nEnter 2 to delete URL\nEnter 3 to add the URL\nEnter 4 to show all URLs\nEnter 5 to get URL\nPress Enter to exit");
             input = sc.nextLine();
             if (input.equals("1")) {
-                System.out.println("Enter URL id");
+
+                System.out.println("Enter URL id from below URLs");
+                printURLS(userId);
                 input = sc.nextLine();
                 urlShortnerService.editURL(userId, Long.parseLong(input));
             } else if (input.equals("2")) {
                 System.out.println("Enter URL id");
+                System.out.println("Enter URL id from below URLs");
+                printURLS(userId);
                 input = sc.nextLine();
                 urlShortnerService.deleteURL(userId, Long.parseLong(input));
             } else if (input.equals("3")) {
                 urlShortnerService.addURL(userId);
+            } else if (input.equals("4")) {
+                printURLS(userId);
+            } else if (input.equals("5")) {
+                System.out.println("Enter short URL");
+                input = sc.nextLine().trim();
+
+                if (input.isEmpty()) {
+                    System.out.println("No URL entered!");
+                    return;
+                }
+
+                String shortKey = input.substring(input.lastIndexOf("/") + 1);
+
+                String longUrl = urlShortnerService.getLongURL(shortKey);
+                System.out.println(longUrl);
             } else {
                 return;
             }

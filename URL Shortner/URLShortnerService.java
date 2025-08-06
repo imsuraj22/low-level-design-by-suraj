@@ -99,8 +99,26 @@ public class URLShortnerService {
         System.out.println("Short URL created: " + shortURL);
     }
 
+    private Url alreadyExists(long userId, String longUrl) {
+        if (userUrlsMap.containsKey(userId)) {
+            List<Url> urls = userUrlsMap.get(userId);
+            for (int i = 0; i < urls.size(); i++) {
+                if (urls.get(i).getLongURL().equals(longUrl))
+                    return urls.get(i);
+            }
+        }
+        return null;
+    }
+
     public String shortenURL(long userId, String longURL, String customAlias, LocalDate expiryDate) {
         String shortKey;
+        if (userId != -1) {
+            Url exist = alreadyExists(userId, longURL);
+            if (exist != null) {
+                System.out.println("URL already shortened. Returning existing short URL.");
+                return "https://myUrlService.ly/" + exist.getShortURL();
+            }
+        }
 
         // 1. Custom alias case
         if (customAlias != null && !customAlias.isEmpty()) {
@@ -191,26 +209,26 @@ public class URLShortnerService {
                 longUrl = sc.nextLine();
             }
         }
-        if (url.getCustomAlias() != null) {
-            System.out.println("Enter 1 to update customAlias/nEnter 2 to remove customAlias/nPress Enter to skip");
-            input = sc.nextLine();
-            if (input.equals("1")) {
-                System.out.println("Enter new CustomAlias");
-                input = sc.nextLine();
-                while (customAliasSet.contains(input)) {
-                    System.out.println(
-                            "This CustomAlias already exits Enter a different one or press enter to skip this");
-                    input = sc.nextLine();
-                    input = input.trim();
-                    if (input.isEmpty())
-                        break;
-                }
-                customAlias = input;
 
-            } else if (input.equals("2")) {
-                url.setCustomAlias(null);
+        System.out.println("Enter 1 to update customAlias\nEnter 2 to remove customAlias\nPress Enter to skip");
+        input = sc.nextLine();
+        if (input.equals("1")) {
+            System.out.println("Enter new CustomAlias");
+            input = sc.nextLine();
+            while (customAliasSet.contains(input)) {
+                System.out.println(
+                        "This CustomAlias already exits Enter a different one or press enter to skip this");
+                input = sc.nextLine();
+                input = input.trim();
+                if (input.isEmpty())
+                    break;
             }
+            customAlias = input;
+
+        } else if (input.equals("2")) {
+            url.setCustomAlias(null);
         }
+
         while (true) {
             System.out.println("Enter new Expire date in this format (yyyy-MM-dd) or press Enter to skip:");
             String input = sc.nextLine().trim();
@@ -243,8 +261,10 @@ public class URLShortnerService {
 
         if (longUrl != null)
             url.setLongURL(longUrl);
-        if (customAlias != null)
+        if (customAlias != null) {
             url.setCustomAlias(customAlias);
+            url.setShortURL(customAlias);
+        }
         if (eDate != null)
             url.setExpireDate(eDate);
         System.out.println("URL updated successfully");
