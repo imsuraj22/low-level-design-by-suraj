@@ -5,20 +5,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Application {
-    private Map<String, Url> shortKeyMap = new HashMap<>();
-    private Map<Long, List<Url>> userUrlsMap = new HashMap<>();
-    private List<User> registeredUsers = new ArrayList<>();
-    private Set<String> customAliasSet = new HashSet<>();
+    private Map<String, Url> shortKeyMap;
+    private Map<Long, List<Url>> userUrlsMap;
+    private List<User> registeredUsers;
+    private Set<String> customAliasSet;
     private URLShortnerService urlShortnerService;
     private UserService userService;
     private Scanner sc;
+    private ConcurrentHashMap<String, Boolean> aliasRegistry;
     // User loggedInUser = null;
 
     public Application() {
+        shortKeyMap = new HashMap<>();
+        userUrlsMap = new HashMap<>();
+        registeredUsers = new ArrayList<>();
+        customAliasSet = new HashSet<>();
         sc = new Scanner(System.in);
-        urlShortnerService = new URLShortnerService(shortKeyMap, userUrlsMap, customAliasSet, sc);
+        aliasRegistry = new ConcurrentHashMap<>();
+        urlShortnerService = new URLShortnerService(shortKeyMap, userUrlsMap, customAliasSet, sc, aliasRegistry);
         userService = new UserService(shortKeyMap, userUrlsMap, registeredUsers, sc, urlShortnerService);
     }
 

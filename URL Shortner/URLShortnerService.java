@@ -7,16 +7,19 @@ public class URLShortnerService {
     private Map<String, Url> shortKeyMap;
     private Map<Long, List<Url>> userUrlsMap;
     private Set<String> customAliasSet;
+    private Map<String, Boolean> aliasRegistry; // alias -> true
+
     private Scanner sc;
     private String input = "";
     private final String URL_REGEX = "^(https?://)" + "([\\w.-]+)" + "(\\.[a-zA-Z]{2,6})" + "([\\w\\-./?%&=]*)?$";
 
     public URLShortnerService(Map<String, Url> shortKeyMap, Map<Long, List<Url>> userUrlsMap,
-            Set<String> customAliasSet, Scanner sc) {
+            Set<String> customAliasSet, Scanner sc, Map<String, Boolean> aliasRegistry) {
         this.shortKeyMap = shortKeyMap;
         this.userUrlsMap = userUrlsMap;
         this.customAliasSet = customAliasSet;
         this.sc = sc;
+        this.aliasRegistry = aliasRegistry;
     }
 
     public void addURL(long userId) {
@@ -122,16 +125,32 @@ public class URLShortnerService {
 
         // 1. Custom alias case
         if (customAlias != null && !customAlias.isEmpty()) {
-            if (customAliasSet.contains(customAlias)) {
-                throw new RuntimeException("Custom alias already exists!");
+            // Keep asking for a unique custom alias until user gives one or skips
+            while (aliasRegistry.containsKey(customAlias)) {
+                System.out.println("This CustomAlias already exists. Enter a different one or press Enter to skip:");
+                customAlias = sc.nextLine().trim();
+                if (customAlias.isEmpty()) {
+                    customAlias = null; // force fallback to auto-generate
+                    break;
+                }
             }
-            shortKey = customAlias;
-            customAliasSet.add(customAlias);
+
+            if (customAlias != null && !customAlias.isEmpty()) {
+                aliasRegistry.put(customAlias, Boolean.TRUE);
+                shortKey = customAlias;
+            } else {
+                // Auto-generate since custom alias skipped
+                do {
+                    shortKey = ShortUrlGenerator.generateShortKey();
+                } while (shortKeyMap.containsKey(shortKey) || aliasRegistry.containsKey(shortKey));
+                aliasRegistry.put(shortKey, Boolean.TRUE);
+            }
         } else {
-            // 2. Auto-generate unique short key
+            // Generate a unique short key if no custom alias provided
             do {
                 shortKey = ShortUrlGenerator.generateShortKey();
-            } while (shortKeyMap.containsKey(shortKey));
+            } while (shortKeyMap.containsKey(shortKey) || aliasRegistry.containsKey(shortKey));
+            aliasRegistry.put(shortKey, Boolean.TRUE);
         }
 
         // 3. Create Url object
@@ -175,6 +194,11 @@ public class URLShortnerService {
         for (int i = 0; i < urls.size(); i++) {
             if (urls.get(i).getUrlId() == urlID) {
                 urls.remove(i);
+                if (urls.get(i).getCustomAlias() != null) {
+                    if (aliasRegistry.containsKey(urls.get(i).getCustomAlias())) {
+                        aliasRegistry.remove(urls.get(i).getCustomAlias());
+                    }
+                }
                 System.out.println("URL removed successfully");
                 return;
             }
@@ -198,7 +222,7 @@ public class URLShortnerService {
         }
         // longurl,customallias,expire date
         String longUrl = "";
-        String customAlias = "";
+        String customAlias = null;
         LocalDate eDate = null;
         System.out.println("Enter new LongURL or press enter to skip");
         longUrl = sc.nextLine();
@@ -212,21 +236,35 @@ public class URLShortnerService {
 
         System.out.println("Enter 1 to update customAlias\nEnter 2 to remove customAlias\nPress Enter to skip");
         input = sc.nextLine();
+
         if (input.equals("1")) {
             System.out.println("Enter new CustomAlias");
             input = sc.nextLine();
-            while (customAliasSet.contains(input)) {
+            input = input.trim();
+
+            // Keep asking until alias is unique or user skips
+            while (!input.isEmpty() && aliasRegistry.containsKey(input)) {
                 System.out.println(
-                        "This CustomAlias already exits Enter a different one or press enter to skip this");
+                        "This CustomAlias already exists. Enter a different one or press Enter to skip this");
                 input = sc.nextLine();
                 input = input.trim();
-                if (input.isEmpty())
-                    break;
             }
-            customAlias = input;
+
+            if (!input.isEmpty()) {
+                // Remove old alias if exists
+                if (url.getCustomAlias() != null) {
+                    aliasRegistry.remove(url.getCustomAlias());
+                }
+                customAlias = input;
+                aliasRegistry.put(customAlias, Boolean.TRUE); // reserve the new alias
+                // url.setCustomAlias(customAlias);
+            }
 
         } else if (input.equals("2")) {
-            url.setCustomAlias(null);
+            if (url.getCustomAlias() != null) {
+                aliasRegistry.remove(url.getCustomAlias()); // free up the alias
+                // url.setCustomAlias(null);
+            }
         }
 
         while (true) {

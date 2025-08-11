@@ -4,10 +4,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Url {
     private static final AtomicInteger counter = new AtomicInteger(0);
     private long urlId;
-    private long userId; // -1 for guest users
+    private long userId; 
     private String longURL;
-    private String shortURL; // Final short URL key
-    private String customAlias; // Optional, only if user provided
+    private String shortURL; 
+    private String customAlias; 
     private LocalDate createAt;
     private LocalDate expireDate;
     private long clickCount;
