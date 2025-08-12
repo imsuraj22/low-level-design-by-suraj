@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Application {
-    private Map<String, Url> shortKeyMap;
+    private ConcurrentHashMap<String, Url> shortKeyMap;
     private Map<Long, List<Url>> userUrlsMap;
     private List<User> registeredUsers;
     private Set<String> customAliasSet;
@@ -19,7 +19,7 @@ public class Application {
     // User loggedInUser = null;
 
     public Application() {
-        shortKeyMap = new HashMap<>();
+        shortKeyMap = new ConcurrentHashMap<>();
         userUrlsMap = new HashMap<>();
         registeredUsers = new ArrayList<>();
         customAliasSet = new HashSet<>();

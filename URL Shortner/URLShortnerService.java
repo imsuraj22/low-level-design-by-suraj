@@ -2,9 +2,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class URLShortnerService {
-    private Map<String, Url> shortKeyMap;
+    private ConcurrentHashMap<String, Url> shortKeyMap;
     private Map<Long, List<Url>> userUrlsMap;
     private Set<String> customAliasSet;
     private Map<String, Boolean> aliasRegistry; // alias -> true
@@ -13,7 +14,7 @@ public class URLShortnerService {
     private String input = "";
     private final String URL_REGEX = "^(https?://)" + "([\\w.-]+)" + "(\\.[a-zA-Z]{2,6})" + "([\\w\\-./?%&=]*)?$";
 
-    public URLShortnerService(Map<String, Url> shortKeyMap, Map<Long, List<Url>> userUrlsMap,
+    public URLShortnerService(ConcurrentHashMap<String, Url> shortKeyMap, Map<Long, List<Url>> userUrlsMap,
             Set<String> customAliasSet, Scanner sc, Map<String, Boolean> aliasRegistry) {
         this.shortKeyMap = shortKeyMap;
         this.userUrlsMap = userUrlsMap;
@@ -149,8 +150,8 @@ public class URLShortnerService {
             // Generate a unique short key if no custom alias provided
             do {
                 shortKey = ShortUrlGenerator.generateShortKey();
-            } while (shortKeyMap.containsKey(shortKey) || aliasRegistry.containsKey(shortKey));
-            aliasRegistry.put(shortKey, Boolean.TRUE);
+                // Check if key is free without inserting the final Url object yet
+            } while (shortKeyMap.containsKey(shortKey));
         }
 
         // 3. Create Url object
@@ -158,13 +159,19 @@ public class URLShortnerService {
                 ? new Url(userId, longURL, shortKey, customAlias, expiryDate)
                 : new Url(longURL, shortKey, customAlias, expiryDate);
 
-        // 4. Store in maps
-        shortKeyMap.put(shortKey, url);
+        // Put in the map only if key is still free (atomic insert)
+        Url existing = shortKeyMap.putIfAbsent(shortKey, url);
+        if (existing != null) {
+            // Rare collision after Url object creation, retry generation
+            // You could loop here again or recursively call the method
+            return shortenURL(userId, longURL, customAlias, expiryDate);
+        }
+
         if (userId != -1) {
             userUrlsMap.computeIfAbsent(userId, k -> new ArrayList<>()).add(url);
         }
 
-        return "Created URL " + "https://myUrlService.ly/" + shortKey;
+        return "Created URL https://myUrlService.ly/" + shortKey;
     }
 
     public String getLongURL(String shortKey) {
@@ -190,26 +197,30 @@ public class URLShortnerService {
     }
 
     public void deleteURL(long userId, long urlID) {
-        List<Url> urls = userUrlsMap.get(urlID);
+        List<Url> urls = userUrlsMap.get(userId);
+        if (urls == null || urls.isEmpty()) {
+            System.out.println("No URLs found for this user");
+            return;
+        }
         for (int i = 0; i < urls.size(); i++) {
             if (urls.get(i).getUrlId() == urlID) {
+                Url urlToRemove = urls.get(i); // store before removal
                 urls.remove(i);
-                if (urls.get(i).getCustomAlias() != null) {
-                    if (aliasRegistry.containsKey(urls.get(i).getCustomAlias())) {
-                        aliasRegistry.remove(urls.get(i).getCustomAlias());
-                    }
+
+                if (urlToRemove.getCustomAlias() != null) {
+                    aliasRegistry.remove(urlToRemove.getCustomAlias());
                 }
+
                 System.out.println("URL removed successfully");
                 return;
             }
         }
         System.out.println("Enter valid URLID");
-        return;
 
     }
 
     public void editURL(long userId, long urlId) {
-        List<Url> urls = userUrlsMap.get(urlId);
+        List<Url> urls = userUrlsMap.get(userId);
         Url url = null;
         for (int i = 0; i < urls.size(); i++) {
             if (urls.get(i).getUrlId() == urlId) {
@@ -221,7 +232,7 @@ public class URLShortnerService {
             return;
         }
         // longurl,customallias,expire date
-        String longUrl = "";
+        String longUrl = null;
         String customAlias = null;
         LocalDate eDate = null;
         System.out.println("Enter new LongURL or press enter to skip");
@@ -263,8 +274,14 @@ public class URLShortnerService {
         } else if (input.equals("2")) {
             if (url.getCustomAlias() != null) {
                 aliasRegistry.remove(url.getCustomAlias()); // free up the alias
-                // url.setCustomAlias(null);
+                url.setCustomAlias(null);
+                customAlias = null;
             }
+            do {
+                customAlias = ShortUrlGenerator.generateShortKey();
+                // Check if key is free without inserting the final Url object yet
+            } while (shortKeyMap.containsKey(customAlias));
+
         }
 
         while (true) {
@@ -281,15 +298,23 @@ public class URLShortnerService {
                 // 2. Parse date
                 eDate = LocalDate.parse(input, DateTimeFormatter.ISO_LOCAL_DATE);
 
-                // 3. Check if within next 30 years
-                LocalDate maxDate = LocalDate.now().plusYears(30);
+                LocalDate today = LocalDate.now();
+                LocalDate maxDate = today.plusYears(30);
+
+                // 3. Check if date is greater than today
+                if (!eDate.isAfter(today)) {
+                    System.out.println("Date must be greater than today's date.");
+                    continue;
+                }
+
+                // 4. Check if within next 30 years
                 if (eDate.isAfter(maxDate)) {
                     System.out.println(
                             "Date cannot be more than 30 years from now. Please re-enter or press Enter to skip.");
                     continue;
                 }
 
-                // 4. If valid, exit loop
+                // 5. If valid, exit loop
                 break;
 
             } catch (DateTimeParseException e) {
@@ -297,9 +322,10 @@ public class URLShortnerService {
             }
         }
 
-        if (longUrl != null)
+        if (longUrl != null && !longUrl.isEmpty())
             url.setLongURL(longUrl);
-        if (customAlias != null) {
+        if (customAlias != null && !customAlias.isEmpty()) {
+
             url.setCustomAlias(customAlias);
             url.setShortURL(customAlias);
         }

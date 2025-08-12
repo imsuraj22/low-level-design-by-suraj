@@ -1,16 +1,18 @@
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class UserService {
-    private Map<String, Url> shortKeyMap;
+    private ConcurrentHashMap<String, Url> shortKeyMap;
     private Map<Long, List<Url>> userUrlsMap;
     private List<User> registeredUsers;
     private Scanner sc;
     private User loggedInUser = null;
     private URLShortnerService urlShortnerService;
 
-    public UserService(Map<String, Url> shortKeyMap, Map<Long, List<Url>> userUrlsMap, List<User> registeredUsers,
+    public UserService(ConcurrentHashMap<String, Url> shortKeyMap, Map<Long, List<Url>> userUrlsMap,
+            List<User> registeredUsers,
             Scanner sc, URLShortnerService urlShortnerService) {
         this.shortKeyMap = shortKeyMap;
         this.userUrlsMap = userUrlsMap;
@@ -111,6 +113,10 @@ public class UserService {
             return;
         }
         long userId = loggedInUser.getId();
+        if (!userUrlsMap.containsKey(userId)) {
+            System.out.println("There are no URLs please add a new URL");
+            urlShortnerService.addURL(userId);
+        }
         printURLS(userId);
 
         String input = "";
@@ -124,13 +130,25 @@ public class UserService {
                 System.out.println("Enter URL id from below URLs");
                 printURLS(userId);
                 input = sc.nextLine();
-                urlShortnerService.editURL(userId, Long.parseLong(input));
+                try {
+                    long id = Long.parseLong(input);
+                    urlShortnerService.editURL(userId, id);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid number.");
+                    // break; // exit the loop
+                }
             } else if (input.equals("2")) {
-                System.out.println("Enter URL id");
+
                 System.out.println("Enter URL id from below URLs");
                 printURLS(userId);
                 input = sc.nextLine();
-                urlShortnerService.deleteURL(userId, Long.parseLong(input));
+                try {
+                    long id = Long.parseLong(input);
+                    urlShortnerService.deleteURL(userId, id);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid number.");
+                    // break; // exit the loop
+                }
             } else if (input.equals("3")) {
                 urlShortnerService.addURL(userId);
             } else if (input.equals("4")) {
