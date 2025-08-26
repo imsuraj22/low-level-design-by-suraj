@@ -5,7 +5,7 @@ public class Pricing {
     private static Map<VehicleType, Double> pricePerHour = new EnumMap<>(VehicleType.class);
 
     static {
-        // Initialize default rates
+
         pricePerHour.put(VehicleType.BIKE, 50.0);
         pricePerHour.put(VehicleType.CAR, 100.0);
     }
@@ -13,6 +13,12 @@ public class Pricing {
     // Get rate
     public static double getRate(VehicleType vehicleType) {
         return pricePerHour.getOrDefault(vehicleType, 0.0);
+    }
+
+    public static void print() {
+        for (VehicleType vc : pricePerHour.keySet()) {
+            System.out.println(vc + " : " + pricePerHour.get(vc));
+        }
     }
 
     // Set rate dynamically if needed

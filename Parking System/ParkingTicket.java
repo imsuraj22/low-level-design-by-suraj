@@ -5,16 +5,27 @@ public class ParkingTicket {
     private static long globalTicketIdCounter = 0;
     private long ticketId;
     private String vehicleNumber;
-    private SlotType slotType;
+    private VehicleType vehicleType;
     private Slot assignedSlot;
     private LocalDateTime arrivedAt;
 
-    public ParkingTicket(String vehicleNumber, SlotType slotType, Slot slot) {
+    public ParkingTicket(String vehicleNumber, VehicleType vehicleType, Slot slot) {
         ticketId = ++globalTicketIdCounter;
         this.vehicleNumber = vehicleNumber;
-        this.slotType = slotType;
+        this.vehicleType = vehicleType;
         this.assignedSlot = slot;
         this.arrivedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return "Ticket{" +
+                "ticketId=" + ticketId +
+                ", vehicleNumber='" + vehicleNumber + '\'' +
+                ", vehicleType=" + vehicleType +
+                ", assignedSlot=" + (assignedSlot != null ? assignedSlot.getSlotId() : "N/A") +
+                ", arrivedAt=" + arrivedAt +
+                '}';
     }
 
     public long getTicketId() {
@@ -25,12 +36,12 @@ public class ParkingTicket {
         return vehicleNumber;
     }
 
-    public SlotType getVehicleType() {
-        return slotType;
+    public VehicleType getVehicleType() {
+        return vehicleType;
     }
 
-    public void setVehicleType(SlotType vehicleType) {
-        this.slotType = vehicleType;
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
     }
 
     public Slot getAssignedSlot() {
