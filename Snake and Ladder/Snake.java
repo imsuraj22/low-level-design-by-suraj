@@ -4,7 +4,8 @@ public class Snake {
 
     public Snake(int start, int end) {
         if (start <= end) {
-            throw new IllegalArgumentException("Snake start must be greater than end (snake must go down)");
+            System.out.println("Snake start must be greater than end (snake must go down)");
+            return;
         }
         this.start = start;
         this.end = end;

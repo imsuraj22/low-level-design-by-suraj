@@ -27,4 +27,20 @@ public class Cell {
         this.ladder = ladder;
     }
 
+    public boolean hasSnake() {
+        return snake != null;
+    }
+
+    public boolean hasLadder() {
+        return ladder != null;
+    }
+
+    public int getEndPosition() {
+        if (hasSnake())
+            return snake.end;
+        if (hasLadder())
+            return ladder.end;
+        return -1;
+    }
+
 }

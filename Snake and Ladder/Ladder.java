@@ -4,7 +4,7 @@ public class Ladder {
 
     public Ladder(int start, int end) {
         if (start >= end) {
-            throw new IllegalArgumentException("Ladder start must be less than end (ladder must go up)");
+            System.out.println("Ladder start must be less than end (ladder must go up)");
         }
         this.start = start;
         this.end = end;

@@ -2,12 +2,12 @@ public class Player {
     private static int idCounter = 1;
     private final int id;
     private String name;
-    private int position;
+    private Cell currentCell;
 
     public Player(String name) {
         this.id = idCounter++;
         this.name = name;
-        this.position = 0;
+        
     }
 
     public int getId() {
@@ -18,11 +18,11 @@ public class Player {
         return name;
     }
 
-    public int getPosition() {
-        return position;
+    public Cell getCell() {
+        return currentCell;
     }
 
-    public void setPosition(int position) {
-        this.position = position;
+    public void setCurrentCell(Cell cell) {
+        this.currentCell = cell;
     }
 }
