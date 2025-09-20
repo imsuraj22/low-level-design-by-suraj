@@ -2,6 +2,7 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Game {
     private Board board;
@@ -11,6 +12,8 @@ public class Game {
     private Scanner sc;
     int n;
     int diceF;
+    private Stack<Move> undoStack = new Stack<>();
+    private Stack<Move> redoStack = new Stack<>();
 
     public Game(int boardSize) {
         this.board = new Board(boardSize);
@@ -99,11 +102,14 @@ public class Game {
         while (true) {
             for (int i = 0; i < players.size(); i++) {
                 boolean doubleOpp = false;
+                Player p = players.get(i);
+                System.out.println(p.getName() + " Press enter to roll the dice");
+                String in = sc.nextLine();
                 int roll = dice.roll();
 
                 if (roll == diceF)
                     doubleOpp = true;
-                Player p = players.get(i);
+
                 System.out.println(p.getName() + " rolled a " + roll);
                 int newpo = p.getCell().getIndex() + roll;
                 if (newpo > board.getCell(n * n).getIndex()) {
@@ -119,28 +125,58 @@ public class Game {
                     newpo = newCell.getLadder().getEnd();
                     newCell = board.getCell(newpo);
                 }
+                Move move = new Move(p, p.getCell(), newCell);
                 p.setCurrentCell(newCell);
+                undoStack.add(move);
+                redoStack.clear();
+                boolean URdo = false;
                 System.out.println(p.getName() + " moved to " + newCell.getIndex());
                 if (newCell.getIndex() == n * n) {
                     System.out.println(p.getName() + " wins the game! and got " + (winningSeq.size() + 1) + " rank");
-                    players.remove(i);
-                    if (players.size() > 0) {
-                        System.out.println("Do you want to stop here or play with other players");
-                        System.out.println("Press Y for Yes OR N for No");
-                        String input = sc.next();
-                        if (input.equals("Y")) {
+                    System.out.println("Press U to undo, R to redo, any other key to continue");
+                    String choice = sc.nextLine().trim();
+                    if (choice.equalsIgnoreCase("U")) {
+                        undo();
+                        URdo = true;
+                        i--;
+                    } else if (choice.equalsIgnoreCase("R")) {
+                        redo();
+                        URdo = true;
+                        i--;
+                    } else {
+                        players.remove(i);
+                        if (players.size() > 0) {
+                            System.out.println("Do you want to stop here or play with other players");
+                            System.out.println("Press Y for Yes OR N for No");
+                            String input = sc.nextLine();
+                            if (input.equalsIgnoreCase("Y")) {
 
-                            i--;
-                        } else {
-                            won = true;
+                                i--;
+                            } else {
+                                won = true;
+                            }
                         }
+
+                        winningSeq.add(p);
+                        if (won)
+                            break;
                     }
 
-                    winningSeq.add(p);
-                    if (won)
-                        break;
                 }
-                if (players.contains(p) && doubleOpp == true) {
+                if (URdo == false) {
+                    System.out.println("Press U to undo, R to redo, any other key to continue");
+                    String choice = sc.nextLine().trim();
+                    if (choice.equalsIgnoreCase("U")) {
+                        undo();
+                        URdo = true;
+                        i--;
+                    } else if (choice.equalsIgnoreCase("R")) {
+                        redo();
+                        URdo = true;
+                        i--;
+                    }
+                }
+                if (players.contains(p) && doubleOpp == true && URdo == false) {
                     i--;
                 }
 
@@ -157,5 +193,28 @@ public class Game {
         for (int i = 0; i < winningSeq.size(); i++) {
             System.out.println(winningSeq.get(i).getName() + " got " + (i + 1) + " Rank");
         }
+    }
+
+    public void undo() {
+        if (undoStack.isEmpty()) {
+            System.out.println("Nothing to undo!");
+            return;
+        }
+        Move last = undoStack.pop();
+        last.getPlayer().setCurrentCell(last.getFromCell());
+        redoStack.push(last);
+        System.out.println(last.getPlayer().getName() + " move undone.");
+    }
+
+    public void redo() {
+        if (redoStack.isEmpty()) {
+            System.out.println("Nothing to redo!");
+            return;
+        }
+        Move move = redoStack.pop();
+        move.getPlayer().setCurrentCell(move.getToCell());
+        undoStack.push(move);
+        System.out.println(move.getPlayer().getName() + " move redone.");
+
     }
 }
