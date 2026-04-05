@@ -27,7 +27,7 @@ public class Game {
     }
 
     public void getPlayers() {
-        sc.nextLine();
+        // sc.nextLine();
         while (true) {
             System.out.println("Enter the name of the player or press Enter to stop");
             String input = sc.nextLine();
