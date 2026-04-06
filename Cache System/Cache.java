@@ -1,10 +1,13 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Cache<K,V> {
     Map<K,CacheNode<K,V>> map;
     DoublyLinkedList<K, V> lruList;
     int capacity;
+
+    ReentrantLock lock = new ReentrantLock();
 
     public Cache(int capacity){
         this.map=new HashMap<>();
@@ -12,7 +15,9 @@ public class Cache<K,V> {
         this.capacity=capacity;
     }
     public V get(K key){
-        if(map.containsKey(key)){
+        try{
+            lock.lock();
+            if(map.containsKey(key)){
             CacheNode<K,V> node=map.get(key);
             if(node.isExpired()) {
                 lruList.removeNode(node);
@@ -24,10 +29,15 @@ public class Cache<K,V> {
             return node.getValue();
 
         }
+        }finally{
+            lock.unlock();
+        }
         return null;
     }
     public void set(K key, V value, long ttl){
-        if(map.containsKey(key)){
+       try{
+        lock.lock();
+             if(map.containsKey(key)){
             CacheNode<K,V> node=map.get(key);
             node.setValue(value);
             node.setExpireAt(System.currentTimeMillis()+ttl);
@@ -39,19 +49,32 @@ public class Cache<K,V> {
             lruList.addToHead(node);
             map.put(key, node);
         }
+       }finally{
+        lock.unlock();
+       }
 
     }
 
     public void delete(K key){
-        if(map.containsKey(key)){
+       try{
+        lock.lock();
+         if(map.containsKey(key)){
             CacheNode<K,V> node=map.get(key);
             lruList.removeNode(node);
             map.remove(key);
         }
+       }finally{
+        lock.unlock();
+       }
     }
 
     public boolean exists(K key) {
-        return get(key) != null;
+        try{
+            lock.lock();
+            return get(key) != null;
+        }finally{
+            lock.unlock();
+        }
     }
 
    private void evictIfNeeded() {
